@@ -1,17 +1,11 @@
 import { APIRequestContext } from '@playwright/test';
+import { RegisterDto } from '../types/auth.types';
 
 export class AuthApi {
   constructor(private request: APIRequestContext) {}
 
-  async register(data: {
-    name: string;
-    email: string;
-    password: string;
-  }) {
-    const response = await this.request.post(
-      '/api/auth/register',
-      { data },
-    );
+  async register(data: RegisterDto) {
+    const response = await this.request.post('/api/auth/register', { data });
 
     return response;
   }
