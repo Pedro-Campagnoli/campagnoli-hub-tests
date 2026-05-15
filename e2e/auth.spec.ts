@@ -1,7 +1,4 @@
-import { TestingApi } from './api/testing.api';
 import { expect, test } from './fixtures/api.fixture';
-import Data from './fixtures/auth.json';
-import { RegisterDto } from './types/auth.types';
 
 test.describe('Register', () => {
   test.describe('campos obrigatórios', () => {
