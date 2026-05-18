@@ -11,8 +11,10 @@ export class AuthApi {
   }
 
   async login(email: string, password: string) {
-    return this.request.post('/api/auth/login', {
+    const response = await this.request.post('/api/auth/login', {
       data: { email, password },
     });
+
+    return response;
   }
 }
