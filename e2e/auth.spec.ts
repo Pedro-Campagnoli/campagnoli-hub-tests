@@ -1,24 +1,30 @@
 import { expect, test } from './fixtures/api.fixture';
+import Data from './fixtures/auth.json';
 
 test.describe('Register', () => {
+  const data = Data.Register;
+
   test.describe('campos obrigatórios', () => {
     test('deve falhar sem name', async ({ authApi }) => {
       const res = await authApi.register({
-        email: 'test@test.com',
-        password: '123456',
+        email: data.email,
+        password: data.password,
       });
       expect(res.status()).toBe(400);
     });
 
     test('deve falhar sem email', async ({ authApi }) => {
-      const res = await authApi.register({ name: 'João', password: '123456' });
+      const res = await authApi.register({
+        name: data.name,
+        password: data.password,
+      });
       expect(res.status()).toBe(400);
     });
 
     test('deve falhar sem password', async ({ authApi }) => {
       const res = await authApi.register({
-        name: 'João',
-        email: 'test@test.com',
+        name: data.name,
+        email: data.email,
       });
       expect(res.status()).toBe(400);
     });
@@ -32,9 +38,9 @@ test.describe('Register', () => {
   test.describe('validações de formato', () => {
     test('deve falhar com email inválido', async ({ authApi }) => {
       const res = await authApi.register({
-        name: 'João',
-        email: 'nao-é-email',
-        password: '123456',
+        name: data.name,
+        email: 'wrongemail.com',
+        password: data.password,
       });
       expect(res.status()).toBe(400);
     });
@@ -43,8 +49,8 @@ test.describe('Register', () => {
       authApi,
     }) => {
       const res = await authApi.register({
-        name: 'João',
-        email: 'test@test.com',
+        name: data.name,
+        email: data.email,
         password: '123',
       });
       expect(res.status()).toBe(400);
@@ -55,25 +61,25 @@ test.describe('Register', () => {
     test('deve falhar com name vazio', async ({ authApi }) => {
       const res = await authApi.register({
         name: '',
-        email: 'test@test.com',
-        password: '123456',
+        email: data.email,
+        password: data.password,
       });
       expect(res.status()).toBe(400);
     });
 
     test('deve falhar com email vazio', async ({ authApi }) => {
       const res = await authApi.register({
-        name: 'João',
+        name: data.name,
         email: '',
-        password: '123456',
+        password: data.password,
       });
       expect(res.status()).toBe(400);
     });
 
     test('deve falhar com password vazio', async ({ authApi }) => {
       const res = await authApi.register({
-        name: 'João',
-        email: 'test@test.com',
+        name: data.name,
+        email: data.email,
         password: '',
       });
       expect(res.status()).toBe(400);
@@ -81,12 +87,6 @@ test.describe('Register', () => {
   });
 
   test.describe('sucesso', () => {
-    const data = {
-      name: 'João',
-      email: 'test@test.com',
-      password: '123456',
-    };
-
     test.beforeEach(async ({ testingApi }) => {
       await testingApi.deleteUser(data.email);
     });
@@ -99,22 +99,16 @@ test.describe('Register', () => {
 });
 
 test.describe('Login', () => {
-  const data = {
-    name: 'LoginTest',
-    email: 'LoginTest@test.com',
-    password: '123456',
-  };
+  const data = Data.Login;
 
   test.describe('campos obrigatórios', () => {
     test('deve falhar sem email', async ({ authApi }) => {
       const res = await authApi.login('', data.password);
-
       expect(res.status()).toBe(400);
     });
 
     test('deve falhar sem password', async ({ authApi }) => {
       const res = await authApi.login(data.email, '');
-
       expect(res.status()).toBe(400);
     });
   });
@@ -133,7 +127,9 @@ test.describe('Login', () => {
         }),
       );
     });
+  });
 
+  test.describe('credenciais inválidas', () => {
     test('deve retornar 401 com password menor que 6 caracteres', async ({
       authApi,
     }) => {
@@ -149,9 +145,7 @@ test.describe('Login', () => {
         }),
       );
     });
-  });
 
-  test.describe('credenciais inválidas', () => {
     test('deve retornar 401 com senha errada', async ({ authApi }) => {
       const res = await authApi.login(data.email, 'senha-errada');
       const body = await res.json();
@@ -198,7 +192,7 @@ test.describe('Login', () => {
           refreshToken: expect.any(String),
         }),
       );
-      expect(body.accessToken.length).toBeGreaterThan(0);
+      expect(body.accessToken.split('.').length).toBe(3);
       expect(body.refreshToken.length).toBeGreaterThan(0);
     });
   });
