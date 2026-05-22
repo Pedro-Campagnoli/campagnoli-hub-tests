@@ -103,19 +103,28 @@ test.describe('Login', () => {
 
   test.describe('campos obrigatórios', () => {
     test('deve falhar sem email', async ({ authApi }) => {
-      const res = await authApi.login('', data.password);
+      const res = await authApi.login({
+        email: '',
+        password: data.password,
+      });
       expect(res.status()).toBe(400);
     });
 
     test('deve falhar sem password', async ({ authApi }) => {
-      const res = await authApi.login(data.email, '');
+      const res = await authApi.login({
+        email: data.email,
+        password: '',
+      });
       expect(res.status()).toBe(400);
     });
   });
 
   test.describe('validações de formato', () => {
     test('deve falhar com email inválido', async ({ authApi }) => {
-      const res = await authApi.login('nao-é-email', data.password);
+      const res = await authApi.login({
+        email: 'nao-é-email',
+        password: data.password,
+      });
       const body = await res.json();
 
       expect(res.status()).toBe(400);
@@ -133,7 +142,10 @@ test.describe('Login', () => {
     test('deve retornar 401 com password menor que 6 caracteres', async ({
       authApi,
     }) => {
-      const res = await authApi.login(data.email, '123');
+      const res = await authApi.login({
+        email: data.email,
+        password: '123',
+      });
       const body = await res.json();
 
       expect(res.status()).toBe(401);
@@ -147,7 +159,10 @@ test.describe('Login', () => {
     });
 
     test('deve retornar 401 com senha errada', async ({ authApi }) => {
-      const res = await authApi.login(data.email, 'senha-errada');
+      const res = await authApi.login({
+        email: data.email,
+        password: 'senha-errada',
+      });
       const body = await res.json();
 
       expect(res.status()).toBe(401);
@@ -161,7 +176,10 @@ test.describe('Login', () => {
     });
 
     test('deve retornar 401 com email inexistente', async ({ authApi }) => {
-      const res = await authApi.login('naoexiste@test.com', data.password);
+      const res = await authApi.login({
+        email: 'naoexiste@test.com',
+        password: data.password,
+      });
       const body = await res.json();
 
       expect(res.status()).toBe(401);
@@ -182,7 +200,10 @@ test.describe('Login', () => {
     });
 
     test('deve retornar tokens ao fazer login', async ({ authApi }) => {
-      const res = await authApi.login(data.email, data.password);
+      const res = await authApi.login({
+        email: data.email,
+        password: data.password,
+      });
       const body = await res.json();
 
       expect(res.status()).toBe(200);
@@ -195,5 +216,43 @@ test.describe('Login', () => {
       expect(body.accessToken.split('.').length).toBe(3);
       expect(body.refreshToken.length).toBeGreaterThan(0);
     });
+  });
+});
+
+test.describe('Refresh', () => {
+  const data = Data.Refresh;
+  test.beforeEach(async ({ authApi, testingApi }) => {
+    await testingApi.deleteUser(data.email);
+    await authApi.register(data);
+  });
+  test('deve retornar refresh e access token ao inserir token valido', async ({
+    authApi,
+  }) => {
+    const loginRes = await authApi.login({
+      email: data.email,
+      password: data.password,
+    });
+    const loginBody = await loginRes.json();
+
+    const res = await authApi.refresh({ refreshToken: loginBody.refreshToken });
+    const resBody = await res.json();
+
+    expect(res.status()).toBe(200);
+    expect(resBody.accessToken.split('.').length).toBe(3);
+    expect(resBody.refreshToken.length).toBeGreaterThan(0);
+  });
+
+  test('deve retornar 401 com refresh token inválido', async ({ authApi }) => {
+    const res = await authApi.refresh({ refreshToken: 'token-invalido' });
+    const body = await res.json();
+
+    expect(res.status()).toBe(401);
+    expect(body).toEqual(
+      expect.objectContaining({
+        message: 'Invalid or expired refresh token',
+        error: 'Unauthorized',
+        statusCode: 401,
+      }),
+    );
   });
 });

@@ -1,5 +1,5 @@
 import { APIRequestContext } from '@playwright/test';
-import { RegisterDto } from '../types/auth.types';
+import { RegisterDto, LoginDto, RefreshTokenDto } from '../types/auth.types';
 
 export class AuthApi {
   constructor(private request: APIRequestContext) {}
@@ -10,11 +10,14 @@ export class AuthApi {
     return response;
   }
 
-  async login(email: string, password: string) {
-    const response = await this.request.post('/api/auth/login', {
-      data: { email, password },
-    });
+  async login(data: LoginDto) {
+    const response = await this.request.post('/api/auth/login', { data });
 
+    return response;
+  }
+
+  async refresh(data: RefreshTokenDto) {
+    const response = await this.request.post('/api/auth/refresh', { data });
     return response;
   }
 }
