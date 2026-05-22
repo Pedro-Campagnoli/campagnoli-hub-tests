@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures/api.fixture';
-import Data from './fixtures/auth.json';
+import Data from './fixtures/auth/auth.json';
+import { expectErrorResponse } from './helpers/auth.helper';
 
 test.describe('Register', () => {
   const data = Data.Register;
@@ -10,7 +11,13 @@ test.describe('Register', () => {
         email: data.email,
         password: data.password,
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['name não pode ser vazio'],
+        error: 'Bad Request',
+      });
     });
 
     test('deve falhar sem email', async ({ authApi }) => {
@@ -18,7 +25,13 @@ test.describe('Register', () => {
         name: data.name,
         password: data.password,
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['email deve ser um e-mail válido'],
+        error: 'Bad Request',
+      });
     });
 
     test('deve falhar sem password', async ({ authApi }) => {
@@ -26,12 +39,28 @@ test.describe('Register', () => {
         name: data.name,
         email: data.email,
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['password deve ter no mínimo 6 caracteres'],
+        error: 'Bad Request',
+      });
     });
 
     test('deve falhar sem nenhum campo', async ({ authApi }) => {
       const res = await authApi.register({});
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: [
+          'name não pode ser vazio',
+          'email deve ser um e-mail válido',
+          'password deve ter no mínimo 6 caracteres',
+        ],
+        error: 'Bad Request',
+      });
     });
   });
 
@@ -42,7 +71,13 @@ test.describe('Register', () => {
         email: 'wrongemail.com',
         password: data.password,
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['email deve ser um e-mail válido'],
+        error: 'Bad Request',
+      });
     });
 
     test('deve falhar com password menor que 6 caracteres', async ({
@@ -53,7 +88,13 @@ test.describe('Register', () => {
         email: data.email,
         password: '123',
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['password deve ter no mínimo 6 caracteres'],
+        error: 'Bad Request',
+      });
     });
   });
 
@@ -64,7 +105,13 @@ test.describe('Register', () => {
         email: data.email,
         password: data.password,
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['name não pode ser vazio'],
+        error: 'Bad Request',
+      });
     });
 
     test('deve falhar com email vazio', async ({ authApi }) => {
@@ -73,7 +120,13 @@ test.describe('Register', () => {
         email: '',
         password: data.password,
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['email deve ser um e-mail válido'],
+        error: 'Bad Request',
+      });
     });
 
     test('deve falhar com password vazio', async ({ authApi }) => {
@@ -82,7 +135,13 @@ test.describe('Register', () => {
         email: data.email,
         password: '',
       });
-      expect(res.status()).toBe(400);
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['password deve ter no mínimo 6 caracteres'],
+        error: 'Bad Request',
+      });
     });
   });
 
@@ -103,19 +162,25 @@ test.describe('Login', () => {
 
   test.describe('campos obrigatórios', () => {
     test('deve falhar sem email', async ({ authApi }) => {
-      const res = await authApi.login({
-        email: '',
-        password: data.password,
+      const res = await authApi.login({ email: '', password: data.password });
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['email deve ser um e-mail válido'],
+        error: 'Bad Request',
       });
-      expect(res.status()).toBe(400);
     });
 
     test('deve falhar sem password', async ({ authApi }) => {
-      const res = await authApi.login({
-        email: data.email,
-        password: '',
+      const res = await authApi.login({ email: data.email, password: '' });
+      const body = await res.json();
+
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['password deve ter no mínimo 6 caracteres'],
+        error: 'Bad Request',
       });
-      expect(res.status()).toBe(400);
     });
   });
 
@@ -127,14 +192,11 @@ test.describe('Login', () => {
       });
       const body = await res.json();
 
-      expect(res.status()).toBe(400);
-      expect(body).toEqual(
-        expect.objectContaining({
-          message: expect.arrayContaining(['email must be an email']),
-          error: 'Bad Request',
-          statusCode: 400,
-        }),
-      );
+      expectErrorResponse(res, body, {
+        status: 400,
+        message: ['email must be an email'],
+        error: 'Bad Request',
+      });
     });
   });
 
@@ -142,20 +204,14 @@ test.describe('Login', () => {
     test('deve retornar 401 com password menor que 6 caracteres', async ({
       authApi,
     }) => {
-      const res = await authApi.login({
-        email: data.email,
-        password: '123',
-      });
+      const res = await authApi.login({ email: data.email, password: '123' });
       const body = await res.json();
 
-      expect(res.status()).toBe(401);
-      expect(body).toEqual(
-        expect.objectContaining({
-          message: 'Invalid credentials',
-          error: 'Unauthorized',
-          statusCode: 401,
-        }),
-      );
+      expectErrorResponse(res, body, {
+        status: 401,
+        message: 'Invalid credentials',
+        error: 'Unauthorized',
+      });
     });
 
     test('deve retornar 401 com senha errada', async ({ authApi }) => {
@@ -165,14 +221,11 @@ test.describe('Login', () => {
       });
       const body = await res.json();
 
-      expect(res.status()).toBe(401);
-      expect(body).toEqual(
-        expect.objectContaining({
-          message: 'Invalid credentials',
-          error: 'Unauthorized',
-          statusCode: 401,
-        }),
-      );
+      expectErrorResponse(res, body, {
+        status: 401,
+        message: 'Invalid credentials',
+        error: 'Unauthorized',
+      });
     });
 
     test('deve retornar 401 com email inexistente', async ({ authApi }) => {
@@ -182,14 +235,11 @@ test.describe('Login', () => {
       });
       const body = await res.json();
 
-      expect(res.status()).toBe(401);
-      expect(body).toEqual(
-        expect.objectContaining({
-          message: 'Invalid credentials',
-          error: 'Unauthorized',
-          statusCode: 401,
-        }),
-      );
+      expectErrorResponse(res, body, {
+        status: 401,
+        message: 'Invalid credentials',
+        error: 'Unauthorized',
+      });
     });
   });
 
@@ -220,18 +270,15 @@ test.describe('Login', () => {
 });
 
 test.describe('Refresh', () => {
-  const data = Data.Refresh;
-  test.beforeEach(async ({ authApi, testingApi }) => {
-    await testingApi.deleteUser(data.email);
-    await authApi.register(data);
-  });
   test('deve retornar refresh e access token ao inserir token valido', async ({
     authApi,
+    testingApi,
   }) => {
-    const loginRes = await authApi.login({
-      email: data.email,
-      password: data.password,
-    });
+    const email = `refresh-${Date.now()}@test.com`;
+    await testingApi.deleteUser(email);
+    await authApi.register({ name: 'Refresh', email, password: '123456' });
+
+    const loginRes = await authApi.login({ email, password: '123456' });
     const loginBody = await loginRes.json();
 
     const res = await authApi.refresh({ refreshToken: loginBody.refreshToken });
@@ -240,19 +287,18 @@ test.describe('Refresh', () => {
     expect(res.status()).toBe(200);
     expect(resBody.accessToken.split('.').length).toBe(3);
     expect(resBody.refreshToken.length).toBeGreaterThan(0);
+
+    await testingApi.deleteUser(email);
   });
 
   test('deve retornar 401 com refresh token inválido', async ({ authApi }) => {
     const res = await authApi.refresh({ refreshToken: 'token-invalido' });
     const body = await res.json();
 
-    expect(res.status()).toBe(401);
-    expect(body).toEqual(
-      expect.objectContaining({
-        message: 'Invalid or expired refresh token',
-        error: 'Unauthorized',
-        statusCode: 401,
-      }),
-    );
+    expectErrorResponse(res, body, {
+      status: 401,
+      message: 'Invalid or expired refresh token',
+      error: 'Unauthorized',
+    });
   });
 });
